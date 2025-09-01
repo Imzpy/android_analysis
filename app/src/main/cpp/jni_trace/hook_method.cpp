@@ -4,7 +4,7 @@
 
 #define IvkCallA(name, result, env, obj, method, jv)  \
     Logs logs;                                        \
-    logs.setStack(MethodStack());                      \
+    logs.setStack(_stack);                    \
     logs.setJniEnv(env);                              \
     logs.setName(#name);                              \
     logs.setCallParams(nullptr, obj, method, jv);     \
@@ -15,7 +15,7 @@
 
 #define IvkCallAVoid(name, result, env, obj, method, jv)\
     Logs logs;                                          \
-    logs.setStack(MethodStack());                        \
+    logs.setStack(_stack);                        \
     logs.setJniEnv(env);                                \
     logs.setName(#name);                                \
     logs.setCallParams(nullptr, obj, method, jv);       \
@@ -24,7 +24,7 @@
 
 #define IvkCallAClz(name, result, env, obj, clz, method, jv)\
     Logs logs;                                              \
-    logs.setStack(MethodStack());                            \
+    logs.setStack(_stack);                            \
     logs.setJniEnv(env);                                    \
     logs.setName(#name);                                    \
     logs.setCallParams(clz, obj,  method, jv);              \
@@ -35,7 +35,7 @@
 
 #define IvkCallAClzVoid(name, result, env, obj, clz, method, jv) \
     Logs logs;                                                   \
-    logs.setStack(MethodStack());                                 \
+    logs.setStack(_stack);                                 \
     logs.setJniEnv(env);                                         \
     logs.setName(#name);                                         \
     logs.setCallParams(clz, obj,  method, jv);                   \
@@ -45,224 +45,201 @@
 #define IvkCall(name, result, env, obj, method)       \
     va_list ap;                                       \
     va_start(ap, method);                             \
-    Logs logs;                                        \
-    logs.setStack(MethodStack());                      \
-    logs.setJniEnv(env);                              \
-    logs.setName(#name);                              \
-    logs.setCallParams(nullptr, obj,  method, ap);    \
-    result r = pHook_##name##V(env, obj, method, ap); \
-    logs.setCallResult((uint64_t)r);                      \
+    auto r = Hook_##name##V(env, obj, method,ap);    \
     va_end(ap);                                       \
-    logs.log();                                       \
     return r;
 
 #define IvkCallVoid(name, result, env, obj, method) \
     va_list ap;                                     \
     va_start(ap, method);                           \
-    Logs logs;                                      \
-    logs.setStack(MethodStack());                    \
-    logs.setJniEnv(env);                            \
-    logs.setName(#name);                            \
-    logs.setCallParams(nullptr, obj,  method, ap);  \
-    pHook_##name##V(env, obj, method, ap);          \
-    va_end(ap);                                     \
-    logs.log();
+    Hook_##name##V(env, obj, method,ap);       \
+    va_end(ap);
 
 #define IvkCallClz(name, result, env, obj, clz, method)  \
     va_list ap;                                          \
     va_start(ap, method);                                \
-    Logs logs;                                           \
-    logs.setStack(MethodStack());                         \
-    logs.setJniEnv(env);                                 \
-    logs.setName(#name);                                 \
-    logs.setCallParams(clz, obj,  method, ap);           \
-    result r = pHook_##name##V(env, obj,clz, method, ap);\
-    logs.setCallResult((uint64_t)r);                         \
+    auto r = Hook_##name##V(env, obj,clz, method,ap);    \
     va_end(ap);                                          \
-    logs.log();                                          \
     return r;
 
 #define IvkCallVoidClz(name, result, env, obj, clz, method) \
     va_list ap;                                             \
     va_start(ap, method);                                   \
-    Logs logs;                                              \
-    logs.setStack(MethodStack());                            \
-    logs.setJniEnv(env);                                    \
-    logs.setName(#name);                                    \
-    logs.setCallParams(clz, obj,  method, ap);              \
-    pHook_##name##V(env, obj, clz,method, ap);              \
-    va_end(ap);                                             \
-    logs.log();
+    Hook_##name##V(env, obj,clz, method,ap);    \
+    va_end(ap);
 
-DefineHookStub(CallObjectMethodA, jobject, JNIEnv *env, jobject obj, jmethodID method,
-               const jvalue *jv) {
+DefineHookStubCheckThreadPassJniTrace(CallObjectMethodA, jobject, JNIEnv *,env, jobject, obj, jmethodID, method,
+               const jvalue *,jv) {
     IvkCallA(CallObjectMethodA, jobject, env, obj, method, jv)
 }
 
-DefineHookStub(CallBooleanMethodA, jboolean, JNIEnv *env, jobject obj, jmethodID method,
-               const jvalue *jv) {
+DefineHookStubCheckThreadPassJniTrace(CallBooleanMethodA, jboolean, JNIEnv *,env, jobject, obj, jmethodID, method,
+               const jvalue *,jv) {
     IvkCallA(CallBooleanMethodA, jboolean, env, obj, method, jv)
 }
 
-DefineHookStub(CallByteMethodA, jbyte, JNIEnv *env, jobject obj, jmethodID method,
-               const jvalue *jv) { IvkCallA(CallByteMethodA, jbyte, env, obj, method, jv) }
+DefineHookStubCheckThreadPassJniTrace(CallByteMethodA, jbyte, JNIEnv *,env, jobject, obj, jmethodID, method,
+               const jvalue *,jv) { IvkCallA(CallByteMethodA, jbyte, env, obj, method, jv) }
 
-DefineHookStub(CallCharMethodA, jchar, JNIEnv *env, jobject obj, jmethodID method,
-               const jvalue *jv) { IvkCallA(CallCharMethodA, jchar, env, obj, method, jv) }
+DefineHookStubCheckThreadPassJniTrace(CallCharMethodA, jchar, JNIEnv *,env, jobject, obj, jmethodID, method,
+               const jvalue *,jv) { IvkCallA(CallCharMethodA, jchar, env, obj, method, jv) }
 
-DefineHookStub(CallShortMethodA, jshort, JNIEnv *env, jobject obj, jmethodID method,
-               const jvalue *jv) { IvkCallA(CallShortMethodA, jshort, env, obj, method, jv) }
+DefineHookStubCheckThreadPassJniTrace(CallShortMethodA, jshort, JNIEnv *,env, jobject, obj, jmethodID, method,
+               const jvalue *,jv) { IvkCallA(CallShortMethodA, jshort, env, obj, method, jv) }
 
-DefineHookStub(CallIntMethodA, jint, JNIEnv *env, jobject obj, jmethodID method,
-               const jvalue *jv) { IvkCallA(CallIntMethodA, jint, env, obj, method, jv) }
+DefineHookStubCheckThreadPassJniTrace(CallIntMethodA, jint, JNIEnv *,env, jobject, obj, jmethodID, method,
+               const jvalue *,jv) { IvkCallA(CallIntMethodA, jint, env, obj, method, jv) }
 
-DefineHookStub(CallLongMethodA, jlong, JNIEnv *env, jobject obj, jmethodID method,
-               const jvalue *jv) { IvkCallA(CallLongMethodA, jlong, env, obj, method, jv) }
+DefineHookStubCheckThreadPassJniTrace(CallLongMethodA, jlong, JNIEnv *,env, jobject, obj, jmethodID, method,
+               const jvalue *,jv) { IvkCallA(CallLongMethodA, jlong, env, obj, method, jv) }
 
-DefineHookStub(CallFloatMethodA, jfloat, JNIEnv *env, jobject obj, jmethodID method,
-               const jvalue *jv) { IvkCallA(CallFloatMethodA, jfloat, env, obj, method, jv) }
+DefineHookStubCheckThreadPassJniTrace(CallFloatMethodA, jfloat, JNIEnv *,env, jobject, obj, jmethodID, method,
+               const jvalue *,jv) { IvkCallA(CallFloatMethodA, jfloat, env, obj, method, jv) }
 
-DefineHookStub(CallDoubleMethodA, jdouble, JNIEnv *env, jobject obj, jmethodID method,
-               const jvalue *jv) { IvkCallA(CallDoubleMethodA, jdouble, env, obj, method, jv) }
+DefineHookStubCheckThreadPassJniTrace(CallDoubleMethodA, jdouble, JNIEnv *,env, jobject, obj, jmethodID, method,
+               const jvalue *,jv) { IvkCallA(CallDoubleMethodA, jdouble, env, obj, method, jv) }
 
-DefineHookStub(CallVoidMethodA, void, JNIEnv *env, jobject obj, jmethodID method,
-               const jvalue *jv) { IvkCallAVoid(CallVoidMethodA, void, env, obj, method, jv); }
+DefineHookStubCheckThreadPassJniTrace(CallVoidMethodA, void, JNIEnv *,env, jobject, obj, jmethodID, method,const jvalue *,jv)
+{ IvkCallAVoid(CallVoidMethodA, void, env, obj, method, jv); }
 
-DefineHookStub(CallNonvirtualObjectMethodA, jobject, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, const jvalue *jv) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualObjectMethodA, jobject, JNIEnv *,env, jobject, obj, jclass ,clz, jmethodID, method, const jvalue *,jv) {
     IvkCallAClz(CallNonvirtualObjectMethodA, jobject, env, obj, clz, method, jv);
 }
 
-DefineHookStub(CallNonvirtualBooleanMethodA, jboolean, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, const jvalue *jv) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualBooleanMethodA, jboolean, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, const jvalue *,jv) {
     IvkCallAClz(CallNonvirtualBooleanMethodA, jboolean, env, obj, clz, method, jv);
 }
 
-DefineHookStub(CallNonvirtualByteMethodA, jbyte, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, const jvalue *jv) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualByteMethodA, jbyte, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, const jvalue *,jv) {
     IvkCallAClz(CallNonvirtualByteMethodA, jbyte, env, obj, clz, method, jv);
 }
 
-DefineHookStub(CallNonvirtualCharMethodA, jchar, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, const jvalue *jv) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualCharMethodA, jchar, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, const jvalue *,jv) {
     IvkCallAClz(CallNonvirtualCharMethodA, jchar, env, obj, clz, method, jv);
 }
 
-DefineHookStub(CallNonvirtualShortMethodA, jshort, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, const jvalue *jv) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualShortMethodA, jshort, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, const jvalue *,jv) {
     IvkCallAClz(CallNonvirtualShortMethodA, jshort, env, obj, clz, method, jv);
 }
 
-DefineHookStub(CallNonvirtualIntMethodA, jint, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, const jvalue *jv) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualIntMethodA, jint, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, const jvalue *,jv) {
     IvkCallAClz(CallNonvirtualIntMethodA, jint, env, obj, clz, method, jv);
 }
 
-DefineHookStub(CallNonvirtualLongMethodA, jlong, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, const jvalue *jv) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualLongMethodA, jlong, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, const jvalue *,jv) {
     IvkCallAClz(CallNonvirtualLongMethodA, jlong, env, obj, clz, method, jv);
 }
 
-DefineHookStub(CallNonvirtualFloatMethodA, jfloat, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, const jvalue *jv) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualFloatMethodA, jfloat, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, const jvalue *,jv) {
     IvkCallAClz(CallNonvirtualFloatMethodA, jfloat, env, obj, clz, method, jv);
 }
 
-DefineHookStub(CallNonvirtualDoubleMethodA, jdouble, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, const jvalue *jv) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualDoubleMethodA, jdouble, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, const jvalue *,jv) {
     IvkCallAClz(CallNonvirtualDoubleMethodA, jdouble, env, obj, clz, method, jv);
 }
 
-DefineHookStub(CallNonvirtualVoidMethodA, void, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, const jvalue *jv) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualVoidMethodA, void, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, const jvalue *,jv) {
     IvkCallAClzVoid(CallNonvirtualVoidMethodA, void, env, obj, clz, method, jv);
 }
 
-DefineHookStub(CallObjectMethodV, jobject, JNIEnv *env, jobject obj, jmethodID method,
-               va_list va) { IvkCallA(CallObjectMethodV, jobject, env, obj, method, va); }
+DefineHookStubCheckThreadPassJniTrace(CallObjectMethodV, jobject, JNIEnv *,env, jobject, obj, jmethodID, method,
+               va_list ,va) { IvkCallA(CallObjectMethodV, jobject, env, obj, method, va); }
 
-DefineHookStub(CallBooleanMethodV, jboolean, JNIEnv *env, jobject obj, jmethodID method,
-               va_list va) { IvkCallA(CallBooleanMethodV, jboolean, env, obj, method, va); }
+DefineHookStubCheckThreadPassJniTrace(CallBooleanMethodV, jboolean, JNIEnv *,env, jobject, obj, jmethodID, method,
+               va_list ,va) { IvkCallA(CallBooleanMethodV, jboolean, env, obj, method, va); }
 
-DefineHookStub(CallByteMethodV, jbyte, JNIEnv *env, jobject obj, jmethodID method,
-               va_list va) { IvkCallA(CallByteMethodV, jbyte, env, obj, method, va); }
+DefineHookStubCheckThreadPassJniTrace(CallByteMethodV, jbyte, JNIEnv *,env, jobject, obj, jmethodID, method,
+               va_list ,va) { IvkCallA(CallByteMethodV, jbyte, env, obj, method, va); }
 
-DefineHookStub(CallCharMethodV, jchar, JNIEnv *env, jobject obj, jmethodID method,
-               va_list va) { IvkCallA(CallCharMethodV, jchar, env, obj, method, va); }
+DefineHookStubCheckThreadPassJniTrace(CallCharMethodV, jchar, JNIEnv *,env, jobject, obj, jmethodID, method,
+               va_list ,va) { IvkCallA(CallCharMethodV, jchar, env, obj, method, va); }
 
-DefineHookStub(CallShortMethodV, jshort, JNIEnv *env, jobject obj, jmethodID method,
-               va_list va) { IvkCallA(CallShortMethodV, jshort, env, obj, method, va); }
+DefineHookStubCheckThreadPassJniTrace(CallShortMethodV, jshort, JNIEnv *,env, jobject, obj, jmethodID, method,
+               va_list ,va) { IvkCallA(CallShortMethodV, jshort, env, obj, method, va); }
 
-DefineHookStub(CallIntMethodV, jint, JNIEnv *env, jobject obj, jmethodID method,
-               va_list va) { IvkCallA(CallIntMethodV, jint, env, obj, method, va); }
+DefineHookStubCheckThreadPassJniTrace(CallIntMethodV, jint, JNIEnv *,env, jobject, obj, jmethodID, method,
+               va_list ,va) { IvkCallA(CallIntMethodV, jint, env, obj, method, va); }
 
-DefineHookStub(CallLongMethodV, jlong, JNIEnv *env, jobject obj, jmethodID method,
-               va_list va) { IvkCallA(CallLongMethodV, jlong, env, obj, method, va); }
+DefineHookStubCheckThreadPassJniTrace(CallLongMethodV, jlong, JNIEnv *,env, jobject, obj, jmethodID, method,
+               va_list ,va) { IvkCallA(CallLongMethodV, jlong, env, obj, method, va); }
 
-DefineHookStub(CallFloatMethodV, jfloat, JNIEnv *env, jobject obj, jmethodID method,
-               va_list va) { IvkCallA(CallFloatMethodV, jfloat, env, obj, method, va); }
+DefineHookStubCheckThreadPassJniTrace(CallFloatMethodV, jfloat, JNIEnv *,env, jobject, obj, jmethodID, method,
+               va_list ,va) { IvkCallA(CallFloatMethodV, jfloat, env, obj, method, va); }
 
-DefineHookStub(CallDoubleMethodV, jdouble, JNIEnv *env, jobject obj, jmethodID method,
-               va_list va) { IvkCallA(CallDoubleMethodV, jdouble, env, obj, method, va); }
+DefineHookStubCheckThreadPassJniTrace(CallDoubleMethodV, jdouble, JNIEnv *,env, jobject, obj, jmethodID, method,
+               va_list ,va) { IvkCallA(CallDoubleMethodV, jdouble, env, obj, method, va); }
 
-DefineHookStub(CallVoidMethodV, void, JNIEnv *env, jobject obj, jmethodID method,
-               va_list va) { IvkCallAVoid(CallVoidMethodV, void, env, obj, method, va); }
+DefineHookStubCheckThreadPassJniTrace(CallVoidMethodV, void, JNIEnv *,env, jobject, obj, jmethodID, method,
+               va_list ,va) { IvkCallAVoid(CallVoidMethodV, void, env, obj, method, va); }
 
-DefineHookStub(CallNonvirtualObjectMethodV, jobject, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, va_list va) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualObjectMethodV, jobject, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, va_list ,va) {
     IvkCallAClz(CallNonvirtualObjectMethodV, jobject, env, obj, clz, method, va);
 }
 
-DefineHookStub(CallNonvirtualBooleanMethodV, jboolean, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, va_list va) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualBooleanMethodV, jboolean, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, va_list ,va) {
     IvkCallAClz(CallNonvirtualBooleanMethodV, jboolean, env, obj, clz, method, va);
 }
 
-DefineHookStub(CallNonvirtualByteMethodV, jbyte, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, va_list va) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualByteMethodV, jbyte, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, va_list ,va) {
     IvkCallAClz(CallNonvirtualByteMethodV, jbyte, env, obj, clz, method, va);
 }
 
-DefineHookStub(CallNonvirtualCharMethodV, jchar, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, va_list va) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualCharMethodV, jchar, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, va_list ,va) {
     IvkCallAClz(CallNonvirtualCharMethodV, jchar, env, obj, clz, method, va);
 }
 
-DefineHookStub(CallNonvirtualShortMethodV, jshort, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, va_list va) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualShortMethodV, jshort, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, va_list ,va) {
     IvkCallAClz(CallNonvirtualShortMethodV, jshort, env, obj, clz, method, va);
 }
 
-DefineHookStub(CallNonvirtualIntMethodV, jint, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, va_list va) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualIntMethodV, jint, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, va_list ,va) {
     IvkCallAClz(CallNonvirtualIntMethodV, jint, env, obj, clz, method, va);
 }
 
-DefineHookStub(CallNonvirtualLongMethodV, jlong, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, va_list va) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualLongMethodV, jlong, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, va_list ,va) {
     IvkCallAClz(CallNonvirtualLongMethodV, jlong, env, obj, clz, method, va);
 }
 
-DefineHookStub(CallNonvirtualFloatMethodV, jfloat, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, va_list va) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualFloatMethodV, jfloat, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, va_list ,va) {
     IvkCallAClz(CallNonvirtualFloatMethodV, jfloat, env, obj, clz, method, va);
 }
 
-DefineHookStub(CallNonvirtualDoubleMethodV, jdouble, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, va_list va) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualDoubleMethodV, jdouble, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, va_list ,va) {
     IvkCallAClz(CallNonvirtualDoubleMethodV, jdouble, env, obj, clz, method, va);
 }
 
-DefineHookStub(CallNonvirtualVoidMethodV, void, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, va_list va) {
+DefineHookStubCheckThreadPassJniTrace(CallNonvirtualVoidMethodV, void, JNIEnv *,env, jobject, obj, jclass ,clz,
+               jmethodID, method, va_list ,va) {
     IvkCallAClzVoid(CallNonvirtualVoidMethodV, void, env, obj, clz, method, va);
 }
 
-DefineHookStub(CallObjectMethod, jobject, JNIEnv *env, jobject obj, jmethodID method,
-               ...) { IvkCall(CallObjectMethod, jobject, env, obj, method); }
+DefineHookStub(CallObjectMethod, jobject, JNIEnv *env, jobject obj, jmethodID method,...)
+{
+    IvkCall(CallObjectMethod, jobject, env, obj, method);
+}
 
-DefineHookStub(CallBooleanMethod, jboolean, JNIEnv *env, jobject obj, jmethodID method,
-               ...) { IvkCall(CallBooleanMethod, jboolean, env, obj, method); }
+DefineHookStub(CallBooleanMethod, jboolean, JNIEnv *env, jobject obj, jmethodID method,...)
+{
+    IvkCall(CallBooleanMethod, jboolean, env, obj, method);
+}
 
 DefineHookStub(CallByteMethod, jbyte, JNIEnv *env, jobject obj, jmethodID method, ...) {
     IvkCall(CallByteMethod, jbyte, env, obj, method);
@@ -288,60 +265,52 @@ DefineHookStub(CallFloatMethod, jfloat, JNIEnv *env, jobject obj, jmethodID meth
     IvkCall(CallFloatMethod, jfloat, env, obj, method);
 }
 
-DefineHookStub(CallDoubleMethod, jdouble, JNIEnv *env, jobject obj, jmethodID method,
-               ...) { IvkCall(CallDoubleMethod, jdouble, env, obj, method); }
+DefineHookStub(CallDoubleMethod, jdouble, JNIEnv *env, jobject obj, jmethodID method,...)
+{
+    IvkCall(CallDoubleMethod, jdouble, env, obj, method);
+}
 
 DefineHookStub(CallVoidMethod, void, JNIEnv *env, jobject obj, jmethodID method, ...) {
     IvkCallVoid(CallVoidMethod, void, env, obj, method);
 }
 
-DefineHookStub(CallNonvirtualObjectMethod, jobject, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, ...) {
+DefineHookStub(CallNonvirtualObjectMethod, jobject, JNIEnv *env, jobject obj, jclass clz,jmethodID method, ...) {
     IvkCallClz(CallNonvirtualObjectMethod, jobject, env, obj, clz, method);
 }
 
-DefineHookStub(CallNonvirtualBooleanMethod, jboolean, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, ...) {
+DefineHookStub(CallNonvirtualBooleanMethod, jboolean, JNIEnv *env, jobject obj, jclass clz,jmethodID method, ...) {
     IvkCallClz(CallNonvirtualBooleanMethod, jboolean, env, obj, clz, method);
 }
 
-DefineHookStub(CallNonvirtualByteMethod, jbyte, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, ...) {
+DefineHookStub(CallNonvirtualByteMethod, jbyte, JNIEnv *env, jobject obj, jclass clz,jmethodID method, ...) {
     IvkCallClz(CallNonvirtualByteMethod, jbyte, env, obj, clz, method);
 }
 
-DefineHookStub(CallNonvirtualCharMethod, jchar, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, ...) {
+DefineHookStub(CallNonvirtualCharMethod, jchar, JNIEnv *env, jobject obj, jclass clz,jmethodID method, ...) {
     IvkCallClz(CallNonvirtualCharMethod, jchar, env, obj, clz, method);
 }
 
-DefineHookStub(CallNonvirtualShortMethod, jshort, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, ...) {
+DefineHookStub(CallNonvirtualShortMethod, jshort, JNIEnv *env, jobject obj, jclass clz,jmethodID method, ...) {
     IvkCallClz(CallNonvirtualShortMethod, jshort, env, obj, clz, method);
 }
 
-DefineHookStub(CallNonvirtualIntMethod, jint, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, ...) {
+DefineHookStub(CallNonvirtualIntMethod, jint, JNIEnv *env, jobject obj, jclass clz,jmethodID method, ...) {
     IvkCallClz(CallNonvirtualIntMethod, jint, env, obj, clz, method);
 }
 
-DefineHookStub(CallNonvirtualLongMethod, jlong, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, ...) {
+DefineHookStub(CallNonvirtualLongMethod, jlong, JNIEnv *env, jobject obj, jclass clz,jmethodID method, ...) {
     IvkCallClz(CallNonvirtualLongMethod, jlong, env, obj, clz, method);
 }
 
-DefineHookStub(CallNonvirtualFloatMethod, jfloat, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, ...) {
+DefineHookStub(CallNonvirtualFloatMethod, jfloat, JNIEnv *env, jobject obj, jclass clz,jmethodID method, ...) {
     IvkCallClz(CallNonvirtualFloatMethod, jfloat, env, obj, clz, method);
 }
 
-DefineHookStub(CallNonvirtualDoubleMethod, jdouble, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, ...) {
+DefineHookStub(CallNonvirtualDoubleMethod, jdouble, JNIEnv *env, jobject obj, jclass clz,jmethodID method, ...) {
     IvkCallClz(CallNonvirtualDoubleMethod, jdouble, env, obj, clz, method);
 }
 
-DefineHookStub(CallNonvirtualVoidMethod, void, JNIEnv *env, jobject obj, jclass clz,
-               jmethodID method, ...) {
+DefineHookStub(CallNonvirtualVoidMethod, void, JNIEnv *env, jobject obj, jclass clz,jmethodID method, ...) {
     IvkCallVoidClz(CallNonvirtualVoidMethod, void, env, obj, clz, method);
 }
 

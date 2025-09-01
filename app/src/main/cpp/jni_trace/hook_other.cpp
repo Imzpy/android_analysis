@@ -2,10 +2,10 @@
 #include "art_method_name.h"
 #include "log_maker.h"
 
-DefineHookStub(RegisterNatives, jint,
-               JNIEnv *env, jclass java_class, const JNINativeMethod *methods, jint method_count) {
+DefineHookStubCheckThreadPassJniTrace(RegisterNatives, jint,
+               JNIEnv *,env, jclass, java_class, const JNINativeMethod *,methods, jint ,method_count) {
     Logs logs;
-    logs.setStack(RegisterNativesStack());
+    logs.setStack(GetStackInfo());
     logs.setJniEnv(env);
     logs.setName("RegisterNatives");
     logs.setParams("jclass", java_class);

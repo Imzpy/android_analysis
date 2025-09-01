@@ -82,4 +82,5 @@ namespace format {
     Declare_Cpp_Format_Fuc(jdoubleArray);
 
     Declare_Cpp_Format_Fuc(JNINativeMethod *);
+    Declare_Cpp_Format_Fuc(void *);
 }

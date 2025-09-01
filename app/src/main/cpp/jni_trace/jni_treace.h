@@ -75,7 +75,10 @@ extern __thread bool passJniTrace;
 extern __thread bool passCallMethod;
 
 
-#define ForwardArgs7(type, value)  value
+#define ForwardArgs10(type, value)  value
+#define ForwardArgs9(type, value, ...)  value __VA_OPT__(,) __VA_OPT__(ForwardArgs10(__VA_ARGS__))
+#define ForwardArgs8(type, value, ...)  value __VA_OPT__(,) __VA_OPT__(ForwardArgs9(__VA_ARGS__))
+#define ForwardArgs7(type, value, ...)  value __VA_OPT__(,) __VA_OPT__(ForwardArgs8(__VA_ARGS__))
 #define ForwardArgs6(type, value, ...)  value __VA_OPT__(,) __VA_OPT__(ForwardArgs7(__VA_ARGS__))
 #define ForwardArgs5(type, value, ...)  value __VA_OPT__(,) __VA_OPT__(ForwardArgs6(__VA_ARGS__))
 #define ForwardArgs4(type, value, ...)  value __VA_OPT__(,) __VA_OPT__(ForwardArgs5(__VA_ARGS__))
@@ -84,7 +87,10 @@ extern __thread bool passCallMethod;
 #define ForwardArgs1(type, value, ...)  value __VA_OPT__(,) __VA_OPT__(ForwardArgs2(__VA_ARGS__))
 #define ForwardArgs(...) ForwardArgs1(__VA_ARGS__)
 
-#define ForwardType7(type, value)  type, value
+#define ForwardType10(type, value)  type, value
+#define ForwardType9(type, value, ...)  type value __VA_OPT__(,) __VA_OPT__(ForwardType10(__VA_ARGS__))
+#define ForwardType8(type, value, ...)  type value __VA_OPT__(,) __VA_OPT__(ForwardType9(__VA_ARGS__))
+#define ForwardType7(type, value, ...)  type value __VA_OPT__(,) __VA_OPT__(ForwardType8(__VA_ARGS__))
 #define ForwardType6(type, value, ...)  type value __VA_OPT__(,) __VA_OPT__(ForwardType7(__VA_ARGS__))
 #define ForwardType5(type, value, ...)  type value __VA_OPT__(,) __VA_OPT__(ForwardType6(__VA_ARGS__))
 #define ForwardType4(type, value, ...)  type value __VA_OPT__(,) __VA_OPT__(ForwardType5(__VA_ARGS__))
@@ -94,11 +100,11 @@ extern __thread bool passCallMethod;
 #define ForwardType(...) ForwardType1(__VA_ARGS__)
 
 
-#define DefineHookStubCheckThreadPassJniTrace(StackFun, Func, Ret, ...)           \
+#define DefineHookStubCheckThreadPassJniTrace(Func, Ret, ...)           \
     Ret logHook_##Func(const vector<Stack> &_stack,ForwardType(__VA_ARGS__));     \
     Ret (*pHook_##Func)(ForwardType(__VA_ARGS__));                                \
     Ret Hook_##Func(ForwardType(__VA_ARGS__)){                                    \
-        auto stack = StackFun();                                                  \
+        auto stack = GetStackInfo();                                                  \
         if (passJniTrace|| jniTrace.CheckTargetModule(stack) == -1) {             \
             return pHook_##Func(ForwardArgs(__VA_ARGS__));                        \
         }                                                                         \
@@ -109,13 +115,7 @@ extern __thread bool passCallMethod;
     Ret logHook_##Func(const vector<Stack> &_stack, ForwardType(__VA_ARGS__))
 
 
-#define MethodStack GetStackInfo
-#define ArrayStack GetStackInfo
-#define FieldStack GetStackInfo
-#define RegisterNativesStack GetStackInfo
-#define StringStack GetStackInfo
-#define ClassStack GetStackInfo
-#define DefineHookStubCheckThreadPassJniTrace_Field(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(FieldStack, Func, Ret,  __VA_ARGS__)
-#define DefineHookStubCheckThreadPassJniTrace_Array(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(ArrayStack, Func, Ret,  __VA_ARGS__)
-#define DefineHookStubCheckThreadPassJniTrace_String(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(StringStack, Func, Ret,  __VA_ARGS__)
-#define DefineHookStubCheckThreadPassJniTrace_Class(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(StringStack, Func, Ret,  __VA_ARGS__)
+#define DefineHookStubCheckThreadPassJniTrace_Field(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(Func, Ret,  __VA_ARGS__)
+#define DefineHookStubCheckThreadPassJniTrace_Array(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(Func, Ret,  __VA_ARGS__)
+#define DefineHookStubCheckThreadPassJniTrace_String(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(Func, Ret,  __VA_ARGS__)
+#define DefineHookStubCheckThreadPassJniTrace_Class(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(Func, Ret,  __VA_ARGS__)

@@ -10,9 +10,10 @@ using std::vector;
 namespace format {
 #define Define_Cpp_Format_Func(type)  string format_value(JNIEnv *env,const type value)
 
+    Define_Cpp_Format_Func(void*) { return xbyl::format_string("%p", value); }
     Define_Cpp_Format_Func(jobjectRefType) { return xbyl::format_string("%d", value); }
 
-    Define_Cpp_Format_Func(jboolean) {}
+    Define_Cpp_Format_Func(jboolean) { return xbyl::format_string("%d", value); }
 
     Define_Cpp_Format_Func(jbyte) { return xbyl::format_string("%d", value); }
 
@@ -67,8 +68,8 @@ namespace format {
                             result += "]";\
                             env->Release##type##ArrayElements(value, data, 0)
 
-    Define_Cpp_Format_Func(jarray) {
-    }
+//    Define_Cpp_Format_Func(jarray) {
+//    }
 
     Define_Cpp_Format_Func(jobjectArray) {
         string result = "[";

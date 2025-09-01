@@ -53,32 +53,19 @@ namespace format {
         }
         const char *ret = env->GetStringUTFChars((jstring) jret, nullptr);
         string result = ret;
-        delete[] ret;
-        return result;
-    }
+        if (ret) {
+            env->ReleaseStringUTFChars((jstring) jret, ret);
 }
-
-static int CheckAllowModule(const vector<Stack> &frame, const initializer_list<string> &strs) {
-    for (const auto &item: frame) {
-        for (int i = 0; i < strs.size(); i++) {
-            if (item.name.find(*(strs.begin() + i)) != string::npos) {
-                return i;
+        env->DeleteLocalRef(jret);
+        return result;
             }
         }
-    }
 
-    string logs = "pass: ";
-    for (const auto &item: frame) {
-        logs += xbyl::format_string("%s:%p", item.name.c_str(), item.offset) + ", ";
-    }
-    logi(logs.c_str());
-    return -1;
-}
-
-static int CheckFirstModule(const vector<Stack> &frame, const initializer_list<string> &strs) {
+static int
+CheckFirstModule(const vector<Stack> &frame, const initializer_list<string> &strs, bool isAllow) {
     if (frame.size() == 0) {
         logd("allow frame.size() <= 0");
-        return 0;
+        return isAllow ? -1 : 0;
     }
 
     const Stack *first = nullptr;
@@ -90,18 +77,15 @@ static int CheckFirstModule(const vector<Stack> &frame, const initializer_list<s
     }
     if (first == nullptr) {
         logd("allow no first");
-        return 0;
+        return isAllow ? -1 : 0;
     }
 
     for (int i = 0; i < strs.size(); i++) {
         if (first->name.find(*(strs.begin() + i)) != string::npos) {
-            logd("pass %s:%p", first->name.c_str(), first->offset);
-            return -1;
+            return isAllow ? 0 : -1;
         }
     }
-
-    logd("allow %s:%p", first->name.c_str(), first->offset);
-    return 0;
+    return isAllow ? -1 : 0;
 }
 
 extern "C"
@@ -132,34 +116,34 @@ JNIEXPORT jboolean JNICALL init(JNIEnv *env, jclass frida_helper) {
         jniTrace.Init((jclass) env->NewGlobalRef(frida_helper), handleLibArt,
                       [](const vector<Stack> &frame) -> int {
 
-                          return CheckFirstModule(frame, {
-                                  {"/apex/com.android.art/"},
-                                  {"/system/lib64/"},
-                                  {"/system/framework/arm64/"},
-                                  {"libandroid_runtime.so"},
-                                  {"libanalyse.so"},
-                                  {"libart.so"},
-                                  {"libjavacore.so"},
-                                  {"libnativeloader.so"},
-                                  {"libopenjdk.so"},
-                                  {"libopenjdkjvm.so"},
-                                  {"libjavacrypto.so"},
-                                  {"libicu_jni.so"},
-                                  {"libgui.so"},
-                                  {"libhwui.so"},
-                                  {"boot.oat"},
-                                  {"libnms.so"},
-                                  {"liballiance.so"},
-                                  {"libmonochrome_64.so"},
-                                  {"libframework-connectivity-tiramisu-jni.so"},
-                                  {"pcam.jar"},
-                                  {"libapminsighta.so"},
-                                  {"libmedia_jni.so"},
-                                  {"com.google.android.gms"},
-                                  {"com.google.android.trichrome"},
-                                  {"libwebviewchromium_loader.so"},
-                                  {"libconscrypt_gmscore_jni.so"},
-                          });
+//                          return CheckFirstModule(frame, {
+//                                  {"/apex/com.android.art/"},
+//                                  {"/system/lib64/"},
+//                                  {"/system/framework/arm64/"},
+//                                  {"libandroid_runtime.so"},
+//                                  {"libanalyse.so"},
+//                                  {"libart.so"},
+//                                  {"libjavacore.so"},
+//                                  {"libnativeloader.so"},
+//                                  {"libopenjdk.so"},
+//                                  {"libopenjdkjvm.so"},
+//                                  {"libjavacrypto.so"},
+//                                  {"libicu_jni.so"},
+//                                  {"libgui.so"},
+//                                  {"libhwui.so"},
+//                                  {"boot.oat"},
+//                                  {"libnms.so"},
+//                                  {"liballiance.so"},
+//                                  {"libmonochrome_64.so"},
+//                                  {"libframework-connectivity-tiramisu-jni.so"},
+//                                  {"pcam.jar"},
+//                                  {"libapminsighta.so"},
+//                                  {"libmedia_jni.so"},
+//                                  {"com.google.android.gms"},
+//                                  {"com.google.android.trichrome"},
+//                                  {"libwebviewchromium_loader.so"},
+//                                  {"libconscrypt_gmscore_jni.so"},
+//                          });
 
 //                          for (const auto &item: frame) {
 //                              if (item.name.find("/memfd:") != string::npos &&
@@ -169,14 +153,21 @@ JNIEXPORT jboolean JNICALL init(JNIEnv *env, jclass frida_helper) {
 //                              }
 //                          }
 //
-//                          return CheckAllowModule(frame, {
-//                                  {"libjiagu_sdk"}
-//                          });
+                          return CheckFirstModule(frame, {
+                                  {"libnms"}
+                          }, true);
                       },
                       passJavaMethod);
         jniTrace.Hook();
     }
     return true;
+}
+void *JniIdManager = nullptr;
+DefineHookStub(DecodeMethodId, jmethodID, void *mgn, jmethodID method) {
+    JniIdManager = mgn;
+    DobbyDestroy((void *) jniHelper._ZN3art3jni12JniIdManager14DecodeMethodIdEP10_jmethodID_0);
+    logi("get JniIdManager %p", JniIdManager);
+    return pHook_DecodeMethodId(mgn, method);
 }
 
 extern "C"

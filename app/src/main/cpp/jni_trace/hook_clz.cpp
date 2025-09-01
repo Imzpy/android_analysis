@@ -2,9 +2,8 @@
 #include "art_method_name.h"
 #include "log_maker.h"
 //
-DefineHookStubCheckThreadPassJniTrace_Class(DefineClass, jclass, JNIEnv*, env, const char*,
-                                             clzName, jobject, obj, const jbyte*, buffer, jsize,
-                                             size){
+DefineHookStubCheckThreadPassJniTrace_Class(DefineClass, jclass, JNIEnv* , env,const char* ,clzName,
+                                            jobject, obj,const jbyte* , buffer, jsize,size) {
 Logs logs;
 logs.setStack(_stack);
 logs.setJniEnv(env);
@@ -63,7 +62,7 @@ logs.setStack(_stack);
 logs.setJniEnv(env);
 logs.setName("NewObjectV");
 logs.setParams("jclass",clz);
-logs.setCallParams(nullptr, nullptr, method, params);
+logs.setCallParams(clz, nullptr, method, params);
 auto result = pHook_NewObjectV(env,clz,method,params);
 logs.setResult("jobject",result);
 logs.log();
@@ -71,13 +70,14 @@ return result;
 }
 //
 DefineHookStubCheckThreadPassJniTrace_Class(NewObjectA, jobject, JNIEnv*, env, jclass, clz,
-                                             jmethodID, method, const jvalue*, params){
+                                            jmethodID, method,
+                                            const jvalue * , params) {
 Logs logs;
 logs.setStack(_stack);
 logs.setJniEnv(env);
 logs.setName("NewObjectA");
 logs.setParams("jclass",clz);
-logs.setCallParams(nullptr, nullptr, method, params);
+logs.setCallParams(clz, nullptr, method, params);
 auto result = pHook_NewObjectA(env,clz,method,params);
 //
 //
@@ -94,13 +94,14 @@ logs.setName("GetObjectClass");
 logs.setParams("jobject", obj);
 auto result = pHook_GetObjectClass(env,obj);
 //
-//logs.setResult();
+logs.setResult("jclass", result);
 logs.log();
 return result;
 }
 //
 DefineHookStubCheckThreadPassJniTrace_Class(GetMethodID, jmethodID, JNIEnv*, env, jclass, clz,
-                                             const char*, method, const char*, sig){
+                                            const char * , method,
+                                            const char * , sig) {
 Logs logs;
 logs.setStack(_stack);
 logs.setJniEnv(env);
@@ -111,11 +112,14 @@ logs.setParams("jclass",clz);
 logs.setParams("char*",method);
 logs.setParams("char*",sig);
 auto result = pHook_GetMethodID(env,clz,method,sig);
+logs.setResult("void*", (void * ) result);
 logs.log();
-return result;}
+return result;
+}
 //
 DefineHookStubCheckThreadPassJniTrace_Class(GetFieldID, jfieldID, JNIEnv*, env, jclass, clz,
-                                             const char*, field, const char*, sig){
+                                            const char * , field,
+                                            const char * , sig) {
 Logs logs;
 logs.setStack(_stack);
 logs.setJniEnv(env);
@@ -126,12 +130,15 @@ logs.setParams("jclass",clz);
 logs.setParams("char*",field);
 logs.setParams("char*",sig);
 auto result = pHook_GetFieldID(env,clz,field,sig);
+logs.setResult("int", result);
 logs.log();
 return result;
 }
 //
 DefineHookStubCheckThreadPassJniTrace_Class(GetStaticMethodID, jmethodID, JNIEnv*, env, jclass,
-                                             clz, const char*, method, const char*, sig){
+                                            clz,
+                                            const char * , method,
+                                            const char * , sig) {
 Logs logs;
 logs.setStack(_stack);
 logs.setJniEnv(env);
@@ -140,12 +147,15 @@ logs.setParams("jclass",clz);
 //
 logs.setParams("char*",method);
 logs.setParams("char*",sig);
-auto result = pHook_GetMethodID(env,clz,method,sig);
+auto result = pHook_GetStaticMethodID(env, clz, method, sig);
+logs.setResult("void*", result);
 logs.log();
-return result;}
+return result;
+}
 
 DefineHookStubCheckThreadPassJniTrace_Class(GetStaticFieldID, jfieldID, JNIEnv*, env, jclass, clz,
-                                             const char*, field, const char*, sig){
+                                            const char * , field,
+                                            const char * , sig) {
 Logs logs;
 logs.setStack(_stack);
 logs.setJniEnv(env);
@@ -153,9 +163,11 @@ logs.setName("GetStaticFieldID");
 logs.setParams("jclass",clz);
 logs.setParams("char*",field);
 logs.setParams("char*",sig);
-auto result = pHook_GetFieldID(env,clz,field,sig);
+auto result = pHook_GetStaticFieldID(env, clz, field, sig);
+logs.setResult("int", result);
 logs.log();
-return result;}
+return result;
+}
 
 DefineHookStubCheckThreadPassJniTrace_Class(Throw, jint, JNIEnv*, env, jthrowable, e){
 Logs logs;
@@ -165,7 +177,8 @@ logs.setName("Throw");
 logs.setParams("jthrowable",e);
 auto result = pHook_Throw(env,e);
 logs.log();
-return result;}
+return result;
+}
 
 DefineHookStubCheckThreadPassJniTrace_Class(ThrowNew, jint, JNIEnv*, env, jclass, clz,
                                              const char *, msg){
@@ -177,7 +190,8 @@ logs.setParams("jclass",clz);
 logs.setParams("char*",msg);
 auto result = pHook_ThrowNew(env,clz,msg);
 logs.log();
-return result;}
+return result;
+}
 
 //DefineHookStubCheckThreadPassJniTrace_Class(NewObject, jobject, JNIEnv*, env, jclass, jmethodID, ...);
 //
