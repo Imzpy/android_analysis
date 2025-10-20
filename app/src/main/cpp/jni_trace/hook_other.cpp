@@ -5,7 +5,7 @@
 DefineHookStubCheckThreadPassJniTrace(RegisterNatives, jint,
                JNIEnv *,env, jclass, java_class, const JNINativeMethod *,methods, jint ,method_count) {
     Logs logs;
-    logs.setStack(GetStackInfo());
+    logs.setStack(_stack);
     logs.setJniEnv(env);
     logs.setName("RegisterNatives");
     logs.setParams("jclass", java_class);

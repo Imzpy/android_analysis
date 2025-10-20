@@ -77,12 +77,12 @@ int64_t string_to_time(const string &time_str, const string &fmt = "%Y-%m-%d %H:
     return mktime(&tm);
 }
 
-bool WritFile(const string &path, const char *buf, int len) {
+bool writ_file(const string &path, const void *buf, int len) {
     std::fstream file(path.c_str(), std::ios::out | std::ios::binary);
     if (!file.is_open()) {
         return false;
     }
-    file.write(buf, len);
+    file.write((char*)buf, len);
     file.flush();
     file.close();
     return true;

@@ -72,7 +72,6 @@ public:
 
 extern JniTrace jniTrace;
 extern __thread bool passJniTrace;
-extern __thread bool passCallMethod;
 
 
 #define ForwardArgs10(type, value)  value
@@ -108,8 +107,6 @@ extern __thread bool passCallMethod;
         if (passJniTrace|| jniTrace.CheckTargetModule(stack) == -1) {             \
             return pHook_##Func(ForwardArgs(__VA_ARGS__));                        \
         }                                                                         \
-        passJniTrace = true;                                                      \
-        defer([] { passJniTrace = false; });                                      \
         return logHook_##Func(stack,ForwardArgs(__VA_ARGS__));                    \
     }                                                                             \
     Ret logHook_##Func(const vector<Stack> &_stack, ForwardType(__VA_ARGS__))

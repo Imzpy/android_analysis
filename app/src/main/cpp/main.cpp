@@ -39,37 +39,37 @@ Java_com_android_analyse_hook_Native_initNative(JNIEnv *env, jclass clazz, jstri
 module_info_t info;
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
-    JNIEnv *env = nullptr;
-    vm->GetEnv((void **) &env, JNI_VERSION_1_6);
-//    dump_so_delay("libjiagu_sdk_caNVksxYProtected.so", 10);
-    WhenSoInitHook("libjiagu_sdk_caNVksxYProtected.so",
-                   [](const string &path, void *addr, const string &funcType) {
-                       logi("libjiagu_sdk_caNVksxYProtected load");
-//                       dump_mprotect([](void *addr, int size, int prot, const string &name) {
-//                           if ((uint64_t) addr == 0xc8000 || (uint64_t) addr == 0x1f6000) {
-//                               dump_so("libjiagu_sdk_caNVksxYProtected.so",
-//                                       "/data/data/" + getPkgName());
-//                           }
-//                       });
-                       hack_get_module_info("libjiagu_sdk_caNVksxYProtected.so", &info);
-                       DobbyInstrument((void *) ((uint64_t) info.module_address + 0x2CBC),
-                                       [](void *address, DobbyRegisterContext *ctx) {
-                                           logi("init array call finish");
-                                           DobbyDestroy(address);
-                                           DobbyInstrument(
-                                                   (void *) ((uint64_t) info.module_address +
-                                                             0x00104EC),
-                                                   [](void *address, DobbyRegisterContext *ctx) {
-                                                       logi("will trace");
-                                                       DobbyDestroy(address);
-                                                       MotherTrace *trace = new MotherTrace();
-                                                       trace->runTraceCode(address,
-                                                                           (void *) (
-                                                                                   (uint64_t) info.module_address +
-                                                                                   0x1061C), ctx);
-                                                   });
-                                       });
-                   });
+//    JNIEnv *env = nullptr;
+//    vm->GetEnv((void **) &env, JNI_VERSION_1_6);
+////    dump_so_delay("libjiagu_sdk_caNVksxYProtected.so", 10);
+//    WhenSoInitHook("libjiagu_sdk_caNVksxYProtected.so",
+//                   [](const string &path, void *addr, const string &funcType) {
+//                       logi("libjiagu_sdk_caNVksxYProtected load");
+////                       dump_mprotect([](void *addr, int size, int prot, const string &name) {
+////                           if ((uint64_t) addr == 0xc8000 || (uint64_t) addr == 0x1f6000) {
+////                               dump_so("libjiagu_sdk_caNVksxYProtected.so",
+////                                       "/data/data/" + getPkgName());
+////                           }
+////                       });
+//                       hack_get_module_info("libjiagu_sdk_caNVksxYProtected.so", &info);
+//                       DobbyInstrument((void *) ((uint64_t) info.module_address + 0x2CBC),
+//                                       [](void *address, DobbyRegisterContext *ctx) {
+//                                           logi("init array call finish");
+//                                           DobbyDestroy(address);
+//                                           DobbyInstrument(
+//                                                   (void *) ((uint64_t) info.module_address +
+//                                                             0x00104EC),
+//                                                   [](void *address, DobbyRegisterContext *ctx) {
+//                                                       logi("will trace");
+//                                                       DobbyDestroy(address);
+//                                                       MotherTrace *trace = new MotherTrace();
+//                                                       trace->runTraceCode(address,
+//                                                                           (void *) (
+//                                                                                   (uint64_t) info.module_address +
+//                                                                                   0x1061C), ctx);
+//                                                   });
+//                                       });
+//                   });
 //    WhenSoInitHook("libtest.so",
 //                   [](const string &path, void *addr, const string &funcType) {
 //                       logi("libtest load");

@@ -17,7 +17,11 @@
 #define JniEnv2Thread(env) *(void **) ((uint64_t) env + sizeof(void *))
 
 ExternHookStub(DecodeMethodId, jmethodID, void *mgn, jmethodID method);
+#define UsePrettyMethodNeedDecodeMethod 1
+#if UsePrettyMethodNeedDecodeMethod
+#define DecodeMethodOffset 0x5C487C
 extern void *JniIdManager;
+#endif
 class JniHelper {
 public:
     bool Init(fake_dlctx_ref_t art) {
@@ -28,9 +32,8 @@ public:
         HackDlsym(art, _ZN3art9ArtMethod12JniShortNameEv, "_ZN3art9ArtMethod12JniShortNameEv")
         HackDlsym(art, _ZN3art9ArtMethod11JniLongNameEv, "_ZN3art9ArtMethod11JniLongNameEv")
         HackDlsym(art, _ZN3art9ArtMethod12PrettyMethodEb, "_ZN3art9ArtMethod12PrettyMethodEb")
-        _ZN3art3jni12JniIdManager14DecodeMethodIdEP10_jmethodID_0 =
-                decltype(_ZN3art3jni12JniIdManager14DecodeMethodIdEP10_jmethodID_0)(
-                        (uint64_t) art->biasaddr + 0x5C487C);
+//        HackDlsym(art, _ZN3art3jni12JniIdManager14DecodeMethodIdEP10_jmethodID_0,
+//                  "_ZN3art3jni12JniIdManager14DecodeMethodIdEP10_jmethodID")
 //        HackDlsym(art, JNIEnvExt_AddLocalReference,
 //                  "_ZN3art9JNIEnvExt17AddLocalReferenceIP8_jstringEET_NS_6ObjPtrINS_6mirror6ObjectEEE")
 //        HackDlsym(art, JNIEnvExt_DeleteLocalRef, "_ZN3art9JNIEnvExt14DeleteLocalRefEP8_jobject")
@@ -59,11 +62,16 @@ public:
             logi("get toString error");
             return false;
         }
+#if UsePrettyMethodNeedDecodeMethod
+        _ZN3art3jni12JniIdManager14DecodeMethodIdEP10_jmethodID_0 =
+                decltype(_ZN3art3jni12JniIdManager14DecodeMethodIdEP10_jmethodID_0)(
+                        (uint64_t) art->biasaddr + DecodeMethodOffset);
         InlineHookAddr(_ZN3art3jni12JniIdManager14DecodeMethodIdEP10_jmethodID_0, 0,
                        DecodeMethodId);
         jclass clz = env->FindClass("android/os/Debug");
         jmethodID method = env->GetStaticMethodID(clz, "isDebuggerConnected", "()Z");
         env->ToReflectedMethod(clz, method, true);
+#endif
         return true;
     }
 
@@ -76,9 +84,11 @@ public:
         }
         return env;
     }
+#if UsePrettyMethodNeedDecodeMethod
     jmethodID DecodeMethod(jmethodID method) {
         return _ZN3art3jni12JniIdManager14DecodeMethodIdEP10_jmethodID_0(JniIdManager, method);
     }
+#endif
 
     string GetMethodName(jmethodID method_id, method_name_type type, bool with_sign = true) {
         string name;

@@ -7,11 +7,13 @@ get_call_stack:
     stp x19, x20, [sp, #-0x10]!  // 保存被调用者寄存器
     stp x21, x22, [sp, #-0x10]!  // 保存被调用者寄存器
 
-    mov x19, x0                  // X19 保存数组地址
+    mov x19, x0                  // 存数组地址
     mov x20, #0                  // 初始化计数器
     mov x21, x29                  // 当前帧指针
     mov x22, x30                  // 当前返回地址
 
+    str x22, [x19, x20, lsl #3]
+    add x20, x20, #1
 loop:
     cmp x20, #10
     bge done                     // 达到 10 层，退出
@@ -22,9 +24,9 @@ loop:
 
     xpaclri                      // 清除 PAC
 
+    ldr x22, [x21, #8]             // 获取上一帧返回地址
     str x22, [x19, x20, lsl #3]     // 保存返回地址到 stack[i]
     ldr x21, [x21]                 // 获取上一帧指针
-    ldr x22, [x21, #8]             // 获取上一帧返回地址
 
     add x20, x20, #1
     b loop

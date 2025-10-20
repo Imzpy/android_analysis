@@ -66,6 +66,47 @@ ExternSetFieldHook(Float);
 
 ExternSetFieldHook(Double);
 
+
+#define ExternGetStaticFieldHook(type) ExternHookStub(GetStatic##type##Field, jobject, JNIEnv *env, jclass obj, jfieldID field)
+
+#define ExternSetStaticFieldHook(type) ExternHookStub(SetStatic##type##Field, void, JNIEnv *env, jclass obj, jfieldID field, jvalue v);
+
+ExternGetStaticFieldHook(Object);
+
+ExternGetStaticFieldHook(Boolean);
+
+ExternGetStaticFieldHook(Byte);
+
+ExternGetStaticFieldHook(Char);
+
+ExternGetStaticFieldHook(Short);
+
+ExternGetStaticFieldHook(Int);
+
+ExternGetStaticFieldHook(Long);
+
+ExternGetStaticFieldHook(Float);
+
+ExternGetStaticFieldHook(Double);
+
+ExternSetStaticFieldHook(Object);
+
+ExternSetStaticFieldHook(Boolean);
+
+ExternSetStaticFieldHook(Byte);
+
+ExternSetStaticFieldHook(Char);
+
+ExternSetStaticFieldHook(Short);
+
+ExternSetStaticFieldHook(Int);
+
+ExternSetStaticFieldHook(Long);
+
+ExternSetStaticFieldHook(Float);
+
+ExternSetStaticFieldHook(Double);
+
 #define ExternCallHook(name, result, ...) ExternHookStub(name, result, __VA_ARGS__,...); \
 ExternHookStub(name##V,result,__VA_ARGS__,va_list);                              \
 ExternHookStub(name##A,result,__VA_ARGS__, const jvalue*);
@@ -137,6 +178,25 @@ ExternHookStub(Throw, jint, JNIEnv*, jthrowable)
 
 ExternHookStub(ThrowNew, jint, JNIEnv*, jclass, const char *)
 
+ExternCallHook(CallStaticVoidMethod, void, JNIEnv*, jclass, jmethodID)
+
+ExternCallHook(CallStaticObjectMethod, void, JNIEnv*, jclass, jmethodID)
+
+ExternCallHook(CallStaticBooleanMethod, void, JNIEnv*, jclass, jmethodID)
+
+ExternCallHook(CallStaticByteMethod, void, JNIEnv*, jclass, jmethodID)
+
+ExternCallHook(CallStaticCharMethod, void, JNIEnv*, jclass, jmethodID)
+
+ExternCallHook(CallStaticShortMethod, void, JNIEnv*, jclass, jmethodID)
+
+ExternCallHook(CallStaticIntMethod, void, JNIEnv*, jclass, jmethodID)
+
+ExternCallHook(CallStaticLongMethod, void, JNIEnv*, jclass, jmethodID)
+
+ExternCallHook(CallStaticFloatMethod, void, JNIEnv*, jclass, jmethodID)
+
+ExternCallHook(CallStaticDoubleMethod, void, JNIEnv*, jclass, jmethodID)
 
 
 #define AddSymbolInfo(symName)  SymbolInfo{.isReg=false, .sym=  #symName, .stub=(void*)Hook_##symName, .org=(void**) &pHook_##symName}
@@ -242,6 +302,54 @@ bool jni_sym::init(fake_dlctx_ref_t handleLibArt, JNIEnv *env) {
             AddSymbolInfoByJniEnv(GetStaticFieldID, env),
             AddSymbolInfoByJniEnv(Throw, env),
             AddSymbolInfoByJniEnv(ThrowNew, env),
+            AddSymbolInfoByJniEnv(CallStaticObjectMethodA, env),
+            AddSymbolInfoByJniEnv(CallStaticBooleanMethodA, env),
+            AddSymbolInfoByJniEnv(CallStaticByteMethodA, env),
+            AddSymbolInfoByJniEnv(CallStaticCharMethodA, env),
+            AddSymbolInfoByJniEnv(CallStaticShortMethodA, env),
+            AddSymbolInfoByJniEnv(CallStaticIntMethodA, env),
+            AddSymbolInfoByJniEnv(CallStaticLongMethodA, env),
+            AddSymbolInfoByJniEnv(CallStaticFloatMethodA, env),
+            AddSymbolInfoByJniEnv(CallStaticDoubleMethodA, env),
+            AddSymbolInfoByJniEnv(CallStaticVoidMethodA, env),
+            AddSymbolInfoByJniEnv(CallStaticObjectMethodV, env),
+            AddSymbolInfoByJniEnv(CallStaticBooleanMethodV, env),
+            AddSymbolInfoByJniEnv(CallStaticByteMethodV, env),
+            AddSymbolInfoByJniEnv(CallStaticCharMethodV, env),
+            AddSymbolInfoByJniEnv(CallStaticShortMethodV, env),
+            AddSymbolInfoByJniEnv(CallStaticIntMethodV, env),
+            AddSymbolInfoByJniEnv(CallStaticLongMethodV, env),
+            AddSymbolInfoByJniEnv(CallStaticFloatMethodV, env),
+            AddSymbolInfoByJniEnv(CallStaticDoubleMethodV, env),
+            AddSymbolInfoByJniEnv(CallStaticVoidMethodV, env),
+            AddSymbolInfoByJniEnv(CallStaticObjectMethod, env),
+            AddSymbolInfoByJniEnv(CallStaticBooleanMethod, env),
+            AddSymbolInfoByJniEnv(CallStaticByteMethod, env),
+            AddSymbolInfoByJniEnv(CallStaticCharMethod, env),
+            AddSymbolInfoByJniEnv(CallStaticShortMethod, env),
+            AddSymbolInfoByJniEnv(CallStaticIntMethod, env),
+            AddSymbolInfoByJniEnv(CallStaticLongMethod, env),
+            AddSymbolInfoByJniEnv(CallStaticFloatMethod, env),
+            AddSymbolInfoByJniEnv(CallStaticDoubleMethod, env),
+            AddSymbolInfoByJniEnv(CallStaticVoidMethod, env),
+            AddSymbolInfoByJniEnv(GetStaticObjectField, env),
+            AddSymbolInfoByJniEnv(GetStaticBooleanField, env),
+            AddSymbolInfoByJniEnv(GetStaticByteField, env),
+            AddSymbolInfoByJniEnv(GetStaticCharField, env),
+            AddSymbolInfoByJniEnv(GetStaticShortField, env),
+            AddSymbolInfoByJniEnv(GetStaticIntField, env),
+            AddSymbolInfoByJniEnv(GetStaticLongField, env),
+            AddSymbolInfoByJniEnv(GetStaticFloatField, env),
+            AddSymbolInfoByJniEnv(GetStaticDoubleField, env),
+            AddSymbolInfoByJniEnv(SetStaticObjectField, env),
+            AddSymbolInfoByJniEnv(SetStaticBooleanField, env),
+            AddSymbolInfoByJniEnv(SetStaticByteField, env),
+            AddSymbolInfoByJniEnv(SetStaticCharField, env),
+            AddSymbolInfoByJniEnv(SetStaticShortField, env),
+            AddSymbolInfoByJniEnv(SetStaticIntField, env),
+            AddSymbolInfoByJniEnv(SetStaticLongField, env),
+            AddSymbolInfoByJniEnv(SetStaticFloatField, env),
+            AddSymbolInfoByJniEnv(SetStaticDoubleField, env),
 //            AddSymbolInfoByJniEnv(ExceptionOccurred, env),
     };
 

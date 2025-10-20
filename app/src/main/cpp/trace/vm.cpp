@@ -43,7 +43,7 @@ VMAction traceCallPath(VM *vm, GPRState *gprState, FPRState *fprState, void *dat
         }
         thiz->findSymbol(targetAddress, &toModuleName, &toSymbolName, &toOffset);
         thiz->findSymbol(instAnalysis->address, &fromModuleName, &fromSymbolName, &fromOffset);
-        thiz->log2file("call:%s:%s:%d:%s:%s:%p:%p:%s:%s:%p:%p",
+        thiz->log2file(Call, "call:%s:%s:%d:%s:%s:%p:%p:%s:%s:%p:%p",
                        thiz->checkInRange(targetAddress) ? "inside" : "outside",
                        regName.c_str(),
                        depth,
@@ -62,7 +62,7 @@ VMAction traceCallPath(VM *vm, GPRState *gprState, FPRState *fprState, void *dat
         targetAddress = QBDI_GPR_GET(gprState, REG_LR);
         thiz->findSymbol(targetAddress, &toModuleName, &toSymbolName, &toOffset);
         thiz->findSymbol(instAnalysis->address, &fromModuleName, &fromSymbolName, &fromOffset);
-        thiz->log2file("ret:%d:%s:%s:%p:%p:%s:%s:%p:%p",
+        thiz->log2file(Call, "ret:%d:%s:%s:%p:%p:%s:%s:%p:%p",
                        depth,
                        fromModuleName.c_str(),
                        fromSymbolName.c_str(),
@@ -75,7 +75,7 @@ VMAction traceCallPath(VM *vm, GPRState *gprState, FPRState *fprState, void *dat
         depth--;
     }
     if (instAnalysis->address == (uint64_t) thiz->stopAddr) {
-        thiz->log2file("Execution stopped at 0x%lx\n", instAnalysis->address);
+        thiz->log2file(Call, "Execution stopped at 0x%lx\n", instAnalysis->address);
         return VMAction::STOP;
     }
     return VMAction::CONTINUE;
@@ -93,9 +93,17 @@ VMAction showPostInstruction(VM *vm, GPRState *gprState, FPRState *fprState, voi
         if (op.regAccess == REGISTER_WRITE || op.regAccess == REGISTER_READ_WRITE) {
             if (op.regCtxIdx != -1 && op.type == OPERAND_GPR) {
                 uint64_t regValue = QBDI_GPR_GET(gprState, op.regCtxIdx);
-                regOutput += xbyl::format_string("  %s=0x%-16lx", op.regName, regValue);
-                if (check_mem((void *) regValue)) {
-                    const uint8_t *dataPtr = reinterpret_cast<const uint8_t *>(regValue);
+                string moduleName, symbolName;
+                uint64_t offset;
+                if (thiz->findSymbol(regValue, &moduleName, &symbolName, &offset)) {
+                    regOutput += xbyl::format_string("  %s=0x%-16lx[%s][%s][%p]\n",
+                                                     op.regName,
+                                                     regValue, moduleName.c_str(),
+                                                     symbolName.c_str(), offset);
+                } else {
+                    regOutput += xbyl::format_string("  %s=0x%-16lx\n", op.regName, regValue);
+                }
+                if (op.regCtxIdx != REG_LR && check_mem((void *) regValue)) {
                     uint8_t buffer[256] = {0};
                     if (safe_read_memory(regValue, buffer, 256)) {
                         memOutput += is_ascii_string(buffer, 256)
@@ -113,10 +121,10 @@ VMAction showPostInstruction(VM *vm, GPRState *gprState, FPRState *fprState, voi
     }
 
     if (!regOutput.empty() || !memOutput.empty()) {
-        thiz->log2file("Write Registers:\n%s\n%s", regOutput.c_str(), memOutput.c_str());
+        thiz->log2file(Code, "Write Registers:\n%s\n%s", regOutput.c_str(), memOutput.c_str());
     }
     if (instAnalysis->address == (uint64_t) thiz->stopAddr) {
-        thiz->log2file("Execution stopped at 0x%lx\n", instAnalysis->address);
+        thiz->log2file(Code, "Execution stopped at 0x%lx\n", instAnalysis->address);
         return VMAction::STOP;
     }
     return VMAction::CONTINUE;
@@ -129,8 +137,7 @@ VMAction showPreInstruction(VM *vm, GPRState *gprState, FPRState *fprState, void
     if (!thiz->checkInRange(instAnalysis->address)) {
         return VMAction::CONTINUE;
     }
-    std::string symbolName;
-    std::string moduleName;
+    string symbolName, moduleName;
     uint64_t offset = 0;
 
     if (instAnalysis->symbol != nullptr) {
@@ -176,7 +183,7 @@ VMAction showPreInstruction(VM *vm, GPRState *gprState, FPRState *fprState, void
                                                 targetOffset);
         }
     }
-    thiz->log2file("Instruction: %s\t\t%s\n", instInfo.c_str(), callLikeInfo.c_str());
+    thiz->log2file(Code, "Instruction: %s\t\t%s\n", instInfo.c_str(), callLikeInfo.c_str());
 
     // 记录读取的寄存器状态
     std::string regOutput;
@@ -184,13 +191,20 @@ VMAction showPreInstruction(VM *vm, GPRState *gprState, FPRState *fprState, void
         auto op = instAnalysis->operands[i];
         if (op.regAccess == REGISTER_READ || op.regAccess == REGISTER_READ_WRITE) {
             if (op.regCtxIdx != -1 && op.type == OPERAND_GPR) {
-                regOutput += xbyl::format_string("  %s=0x%-16lx", op.regName,
-                                                 QBDI_GPR_GET(gprState, op.regCtxIdx));
+                uint64_t regValue = QBDI_GPR_GET(gprState, op.regCtxIdx);
+                if (thiz->findSymbol(regValue, &moduleName, &symbolName, &offset)) {
+                    regOutput += xbyl::format_string("  %s=0x%-16lx[%s][%s][%p]\n",
+                                                     op.regName,
+                                                     regValue, moduleName.c_str(),
+                                                     symbolName.c_str(), offset);
+                } else {
+                    regOutput += xbyl::format_string("  %s=0x%-16lx\n", op.regName, regValue);
+                }
             }
         }
     }
     if (!regOutput.empty()) {
-        thiz->log2file("Read Registers:\n%s\n", regOutput.c_str());
+        thiz->log2file(Code, "Read Registers:\n%s\n", regOutput.c_str());
     }
     return VMAction::CONTINUE;
 }
@@ -209,7 +223,7 @@ VMAction showMemoryAccess(VM *vm, GPRState *gprState, FPRState *fprState, void *
                                          type, acc.accessAddress, acc.size, acc.value);
     }
     if (!memOutput.empty()) {
-        thiz->log2file("Memory Access:\n%s", memOutput.c_str());
+        thiz->log2file(Mem, "Memory Access:\n%s", memOutput.c_str());
     }
     return VMAction::CONTINUE;
 }

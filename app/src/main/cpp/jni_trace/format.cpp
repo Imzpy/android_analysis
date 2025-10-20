@@ -44,7 +44,8 @@ namespace format {
         return xbyl::format_string("%s:%p",
                                    GET_Java_Format_Fuc(in_java_parse)(env,
                                                                       toJValue(value),
-                                                                      getTypeName<decltype(value)>()).c_str());
+                                                                      getTypeName<decltype(value)>()).c_str(),
+                                   value);
     }
 
     using FormatFunc = string (*)(JNIEnv *env, const jvalue &obj, const string &args_type);

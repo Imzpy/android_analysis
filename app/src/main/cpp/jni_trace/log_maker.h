@@ -3,7 +3,6 @@
 #include "art_method_name.h"
 
 class Logs {
-    bool passMethod = false;
     vector<string> args_type;
     string retType;
     string retSerialize;
@@ -20,7 +19,6 @@ class Logs {
 public:
     void setStack(const vector<Stack> &_stack) {
         this->stack = _stack;
-        passMethod = jniTrace.CheckTargetModule(stack) == -1;
     }
 
     void setJniEnv(JNIEnv *_env) {
@@ -33,20 +31,29 @@ public:
 
     template<class T>
     void setParams(const string &_type, T _value) {
+        passJniTrace = true;
+        defer([]() {
+            passJniTrace = false;
+        });
         args_type.push_back(_type);
         argsSerialize.push_back(format_value(env, _value));
     }
 
     void setParams(const string &_type, jvalue _value) {
+        passJniTrace = true;
+        defer([]() {
+            passJniTrace = false;
+        });
         args_type.push_back(_type);
         argsSerialize.push_back(SerializeJavaObject(env, _type, _value));
     }
 
     void
     setCallParams(jclass _clz, jobject _obj, jmethodID method, va_list va) {
-        if (passMethod) {
-            return;
-        }
+        passJniTrace = true;
+        defer([]() {
+            passJniTrace = false;
+        });
         this->clz = _clz;
         this->obj = _obj;
         if (!parseMethod(method)) {
@@ -57,9 +64,10 @@ public:
     }
 
     void setCallParams(jclass _clz, jobject _obj, jmethodID method, const jvalue *jv) {
-        if (passMethod) {
-            return;
-        }
+        passJniTrace = true;
+        defer([]() {
+            passJniTrace = false;
+        });
         this->clz = _clz;
         this->obj = _obj;
         if (!parseMethod(method)) {
@@ -70,9 +78,10 @@ public:
     }
 
     void setCallResult(uint64_t result) {
-        if (passMethod) {
-            return;
-        }
+        passJniTrace = true;
+        defer([]() {
+            passJniTrace = false;
+        });
         jvalue value;
         value.l = (jobject) result;
         retSerialize = SerializeJavaObject(env, retType, value);
@@ -80,17 +89,19 @@ public:
 
     template<class T>
     void setResult(const string &_retType, T result) {
-        if (passMethod) {
-            return;
-        }
+        passJniTrace = true;
+        defer([]() {
+            passJniTrace = false;
+        });
         this->retType = _retType;
         retSerialize = format_value(env, result);
     }
 
     void log() {
-        if (passMethod) {
-            return;
-        }
+        passJniTrace = true;
+        defer([]() {
+            passJniTrace = false;
+        });
         std::string log = xbyl::format_string("tid: %-6d, name: %-20s", gettid(), name.c_str());
         if (!method_pretty_name.empty()) {
             log += xbyl::format_string(", invoke: %-50s", method_pretty_name.c_str());
@@ -133,11 +144,13 @@ public:
     }
 
     bool parseMethod(jmethodID method) {
-        method_pretty_name = jniHelper.GetMethodName(jniHelper.DecodeMethod(method),
-                                                     method_name_type::pretty_name);
+#if UsePrettyMethodNeedDecodeMethod
+        method_pretty_name = jniHelper.GetMethodName(jniHelper.DecodeMethod(method),method_name_type::pretty_name);
+#else
+        method_pretty_name = jniHelper.GetMethodName(method, method_name_type::pretty_name);
+#endif
         if (jniTrace.CheckPassJavaMethod(method, method_pretty_name)) {
             loge("pass method: %s", method_pretty_name.c_str());
-            passMethod = true;
             return false;
         }
         if (!parse_java_method_sig(method_pretty_name, class_name, method_name, args_type,

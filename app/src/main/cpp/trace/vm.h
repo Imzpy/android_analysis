@@ -48,9 +48,6 @@ class MotherTrace {
     friend VMAction traceCallPath(VM *vm, GPRState *gprState, FPRState *fprState, void *data);
 
 public:
-    MotherTrace() {
-        writer.open("/data/data/" + getPkgName(), "trace");
-    }
 
     bool enableMemoryTrace() {
         if (!vm.recordMemoryAccess(MEMORY_READ_WRITE)) {
@@ -66,6 +63,7 @@ public:
     }
 
     bool enableCodeTrace() {
+        trace_code_writer.open("/data/data/" + getPkgName(), "trace_code");
         uint32_t cid = vm.addCodeCB(PREINST, showPreInstruction, this);
         if (cid == INVALID_EVENTID) {
             loge("enableMemoryTrace error!");
@@ -80,6 +78,7 @@ public:
     }
 
     bool enableCallTrace() {
+        trace_call_writer.open("/data/data/" + getPkgName(), "trace_call");
         uint32_t cid = vm.addCodeCB(PREINST, traceCallPath, this);
         if (cid == INVALID_EVENTID) {
             loge("enableMemoryTrace error!");
@@ -88,16 +87,19 @@ public:
         return true;
     }
 
-    void addTargetRange(void *start, void *end) {
+    void addTargetRange(void *start, void *end, bool log) {
+        if (log) {
         range.push_back({.start=(uint64_t) start, .end=(uint64_t) end});
+        }
+        vm.addInstrumentedRange((rword) start, (rword) end);
     }
 
-    void addTargetModule(const string &name) {
+    void addTargetModule(const string &name, bool log) {
         auto maps = get_process_maps(name);
-        addTargetRange(get_module_base(maps, name), get_module_end(maps, name));
+        addTargetRange(get_module_base(maps, name), get_module_end(maps, name), log);
     }
 
-    bool runTraceCode(void *start, void *stop, DobbyRegisterContext *ctx, TraceType type) {
+    bool runTraceCode(void *start, void *stop, DobbyRegisterContext *ctx, int type) {
         logi("trace start: %p", start);
         maps = get_process_maps();
         if (!preRun(ctx)) {
@@ -113,17 +115,7 @@ public:
             enableCallTrace();
         }
         stopAddr = stop;
-        bool ret = vm.addInstrumentedModuleFromAddr(reinterpret_cast<rword>(start));
-        if (!ret) {
-            loge("addInstrumentedModuleFromAddr error");
-        }
-        Dl_info info{};
-        if (dladdr(start, &info) != 0) {
-            addTargetModule(info.dli_fname);
-        } else {
-            loge("not find start module");
-        }
-        ret = vm.call(nullptr, (uint64_t) start);
+        auto ret = vm.call(nullptr, (uint64_t) start);
         alignedFree(fakestack);
         logi("trace end");
         return ret;
@@ -132,7 +124,8 @@ public:
 private:
     VM vm;
     uint8_t *fakestack;
-    app_file_writer writer;
+    app_file_writer trace_code_writer;
+    app_file_writer trace_call_writer;
     vector<MapsInfo> maps;
     list<uint64_t> symbolCacheOrder;
     unordered_map<uint64_t, Symbol> symbolCache;
@@ -242,15 +235,19 @@ protected:
         return suc;
     }
 
-    void log2file(const char *fmt, ...) {
+    void log2file(TraceType type, const char *fmt, ...) {
         va_list ap;
         va_start(ap, fmt);
         string result = xbyl::format_string(fmt, ap);
         va_end(ap);
-        log2file(result);
+        log2file(type, result);
     }
 
-    void log2file(const string &log) {
-        writer.write2file(log);
+    void log2file(TraceType type, const string &log) {
+        if (type == Call) {
+            trace_call_writer.write2file(log);
+        } else {
+            trace_code_writer.write2file(log);
+        }
     }
 };

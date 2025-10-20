@@ -26,7 +26,7 @@ jobject CallStaticObjectMethod(JNIEnv *env, void *soc, jclass, jmethodID mid, ..
 JniTrace jniTrace;
 JniHelper jniHelper;
 __thread bool passJniTrace = false;
-__thread bool passCallMethod = false;
+
 namespace format {
     DECLARE_Java_Format_Func(in_java_parse) {
 //        logd("parse in java: %s %p ", args_type.c_str(), obj.l);
@@ -42,12 +42,10 @@ namespace format {
 //    }
 //#endif
         jobject gref = obj.l;
-        passCallMethod = true;
         auto jret = env->CallStaticObjectMethod(jniTrace.frida_helper, jniTrace.object_2_string,
                                                 gref);
 //    auto jret = (jstring) CallStaticObjectMethod(env->env, env->soc, jniTrace.frida_helper,
 //                                                 jniTrace.object_2_string, gref);
-        passCallMethod = false;
         if (jret == nullptr) {
             return "null";
         }
@@ -61,11 +59,18 @@ namespace format {
             }
         }
 
+set<string> unknowStack;
 static int
 CheckFirstModule(const vector<Stack> &frame, const initializer_list<string> &strs, bool isAllow) {
     if (frame.size() == 0) {
         logd("allow frame.size() <= 0");
         return isAllow ? -1 : 0;
+    }
+    for (auto &item: frame) {
+        if (!unknowStack.contains(item.name)) {
+            unknowStack.insert(item.name);
+            logi("add stack %s", item.name.c_str());
+        }
     }
 
     const Stack *first = nullptr;
@@ -77,7 +82,8 @@ CheckFirstModule(const vector<Stack> &frame, const initializer_list<string> &str
     }
     if (first == nullptr) {
         logd("allow no first");
-        return isAllow ? -1 : 0;
+//        return isAllow ? -1 : 0;
+        return 0;
     }
 
     for (int i = 0; i < strs.size(); i++) {
@@ -154,7 +160,8 @@ JNIEXPORT jboolean JNICALL init(JNIEnv *env, jclass frida_helper) {
 //                          }
 //
                           return CheckFirstModule(frame, {
-                                  {"libnms"}
+                                  "main",
+                                  "dmcorenxvzxvfh",
                           }, true);
                       },
                       passJavaMethod);
@@ -162,14 +169,20 @@ JNIEXPORT jboolean JNICALL init(JNIEnv *env, jclass frida_helper) {
     }
     return true;
 }
+#if UsePrettyMethodNeedDecodeMethod
 void *JniIdManager = nullptr;
 DefineHookStub(DecodeMethodId, jmethodID, void *mgn, jmethodID method) {
     JniIdManager = mgn;
     DobbyDestroy((void *) jniHelper._ZN3art3jni12JniIdManager14DecodeMethodIdEP10_jmethodID_0);
+    if (JniIdManager == nullptr) {
+        loge("get JniIdManager %p", JniIdManager);
+    } else {
     logi("get JniIdManager %p", JniIdManager);
+    }
     return pHook_DecodeMethodId(mgn, method);
 }
 
+#endif
 extern "C"
 JNIEXPORT jboolean
 JNICALL

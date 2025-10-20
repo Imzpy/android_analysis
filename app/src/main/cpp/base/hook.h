@@ -48,11 +48,11 @@ bool hookAll(vector<SymbolInfo> *symbols);
 //};
 
 
+#define DefineHookFunType(Func, Ret, ...) using Func_##Func = Ret(__VA_ARGS__);
 #define ExternHookStubFunc(Func, Ret, ...) extern Ret Hook_##Func(__VA_ARGS__);
 #define DefineHookStubFunc(Func, Ret, ...) Ret Hook_##Func(__VA_ARGS__)
 #define DefineHookRawOrgFunc(Func, Ret, ...) Ret (*pHook_##Func)(__VA_ARGS__);
 #define ExternHookRawOrgFunc(Func, Ret, ...) extern Ret (*pHook_##Func)(__VA_ARGS__);
-#define DefineHookFunType(Func, Ret, ...) using Func_##Func = Ret(__VA_ARGS__);
 
 #define DefineHookStub(Func, Ret, ...) DefineHookRawOrgFunc(Func, Ret, ##__VA_ARGS__) \
     DefineHookStubFunc(Func, Ret, ##__VA_ARGS__)
@@ -63,10 +63,16 @@ bool hookAll(vector<SymbolInfo> *symbols);
 
 #define InlineHookAddr(Base, Addr, Func) DobbyHook((char *)Base + Addr, (dobby_dummy_func_t) & Hook_##Func, (dobby_dummy_func_t *)&pHook_##Func)
 
-#define InlineHookSymbol(LibName, FuncName, Replace)       DobbyHook(DobbySymbolResolver(LibName,#FuncName),        \
-                                                            (dobby_dummy_func_t) &Replace, (dobby_dummy_func_t *)&pHook_##FuncName)
-
-
+#define InlineHook(lib, name)   { \
+                                    void* tmp_##name = DobbySymbolResolver(lib,#name); \
+                                    if(tmp_##name == nullptr){                         \
+                                        loge("DobbySymbolResolver %s -> %s failed!!!",lib,#name);    \
+                                    }    \
+                                    int tmp2_##name = DobbyHook(tmp_##name,(dobby_dummy_func_t) Hook_##name,(dobby_dummy_func_t*) &pHook_##name); \
+                                    if(tmp2_##name== -1) {   \
+                                      loge("DobbyHook %s -> %s failed!!!",lib,#name);       \
+                                    }   \
+                                }
 
 extern void
 _HookLogWitchLibWithStack(const string &libName, const string &funcName, void *ret, const char *fmt,

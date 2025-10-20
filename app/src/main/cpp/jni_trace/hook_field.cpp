@@ -79,39 +79,80 @@ DefineSetFieldHook(Float, "F")
 
 DefineSetFieldHook(Double, "D")
 
+void
+DealSetStaticFieldValue(const string &tags, const string &type, const vector<Stack> &stack,
+                        void(*hook)(JNIEnv *, jclass, jfieldID, jvalue v), JNIEnv *env, jclass clz,
+                        jfieldID field, jvalue v) {
+    Logs logs;
+    logs.setStack(stack);
+    logs.setJniEnv(env);
+    logs.setName(tags);
+    logs.setParams("jclass", clz);
+    logs.setParams("jfieldID", field);
+    logs.setParams(type, v);
+    hook(env, clz, field, v);
+    logs.log();
+}
 
-DefineHookStub(GetStaticObjectField, jobject, JNIEnv *env, jclass, jfieldID);
+jobject
+DealGetStaticFieldValue(const string &tags, const string &type, const vector<Stack> &stack,
+                        jobject(*hook)(JNIEnv *, jclass, jfieldID), JNIEnv *env, jclass clz,
+                        jfieldID field) {
+    Logs logs;
+    logs.setStack(stack);
+    logs.setJniEnv(env);
+    logs.setName(tags);
+    logs.setParams("jclass", clz);
+    logs.setParams("jfieldID", field);
+    auto result = hook(env, clz, field);
+    logs.setResult(type, result);
+    logs.log();
+    return result;
+}
 
-DefineHookStub(GetStaticBooleanField, jboolean, JNIEnv *env, jclass, jfieldID);
+#define DefineSetStaticFieldHook(type, sigType) \
+DefineHookStubCheckThreadPassJniTrace_Field(SetStatic##type##Field, void, JNIEnv*, env, jclass, clz, jfieldID, field, jvalue, v) { \
+    DealSetStaticFieldValue("SetStatic" #type "Field",sigType, _stack, pHook_SetStatic##type##Field, env, clz, field,v);\
+}
 
-DefineHookStub(GetStaticByteField, jbyte, JNIEnv *env, jclass, jfieldID);
+#define DefineGetStaticFieldHook(type, sigType) \
+DefineHookStubCheckThreadPassJniTrace_Field(GetStatic##type##Field, jobject, JNIEnv *,env, jclass, clz, jfieldID, field) { \
+   return DealGetStaticFieldValue("GetStatic" #type "Field",sigType, _stack, pHook_GetStatic##type##Field, env, clz, field);\
+}
 
-DefineHookStub(GetStaticCharField, jchar, JNIEnv *env, jclass, jfieldID);
 
-DefineHookStub(GetStaticShortField, jshort, JNIEnv *env, jclass, jfieldID);
+DefineSetStaticFieldHook(Object, "L")
 
-DefineHookStub(GetStaticIntField, jint, JNIEnv *env, jclass, jfieldID);
+DefineSetStaticFieldHook(Boolean, "Z")
 
-DefineHookStub(GetStaticLongField, jlong, JNIEnv *env, jclass, jfieldID);
+DefineSetStaticFieldHook(Byte, "B")
 
-DefineHookStub(GetStaticFloatField, jfloat, JNIEnv *env, jclass, jfieldID);
+DefineSetStaticFieldHook(Char, "C")
 
-DefineHookStub(GetStaticDoubleField, jdouble, JNIEnv *env, jclass, jfieldID);
+DefineSetStaticFieldHook(Short, "S")
 
-DefineHookStub(SetStaticObjectField, void, JNIEnv *env, jclass, jfieldID, jobject);
+DefineSetStaticFieldHook(Int, "I")
 
-DefineHookStub(SetStaticBooleanField, void, JNIEnv *env, jclass, jfieldID, jboolean);
+DefineSetStaticFieldHook(Long, "J")
 
-DefineHookStub(SetStaticByteField, void, JNIEnv *env, jclass, jfieldID, jbyte);
+DefineSetStaticFieldHook(Float, "F")
 
-DefineHookStub(SetStaticCharField, void, JNIEnv *env, jclass, jfieldID, jchar);
+DefineSetStaticFieldHook(Double, "D")
 
-DefineHookStub(SetStaticShortField, void, JNIEnv *env, jclass, jfieldID, jshort);
+DefineGetStaticFieldHook(Object, "L")
 
-DefineHookStub(SetStaticIntField, void, JNIEnv *env, jclass, jfieldID, jint);
+DefineGetStaticFieldHook(Boolean, "Z")
 
-DefineHookStub(SetStaticLongField, void, JNIEnv *env, jclass, jfieldID, jlong);
+DefineGetStaticFieldHook(Byte, "B")
 
-DefineHookStub(SetStaticFloatField, void, JNIEnv *env, jclass, jfieldID, jfloat);
+DefineGetStaticFieldHook(Char, "C")
 
-DefineHookStub(SetStaticDoubleField, void, JNIEnv *env, jclass, jfieldID, jdouble);
+DefineGetStaticFieldHook(Short, "S")
+
+DefineGetStaticFieldHook(Int, "I")
+
+DefineGetStaticFieldHook(Long, "J")
+
+DefineGetStaticFieldHook(Float, "F")
+
+DefineGetStaticFieldHook(Double, "D")

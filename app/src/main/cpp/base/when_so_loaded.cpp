@@ -29,7 +29,7 @@ DefineHookStub(android_dlopen_ext, void *, const char *filename, int flag, const
 void WhenSoLoaded(const string &libName, WhenHookCallBack _callBack) {
     callBackLock.lock();
     if (!hadInit) {
-        InlineHookSymbol("libc.so", android_dlopen_ext, Hook_android_dlopen_ext);
+        InlineHook("libc.so", android_dlopen_ext);
         hadInit = true;
     }
     callBack.push_back(make_pair(libName, _callBack));
